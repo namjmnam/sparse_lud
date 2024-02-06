@@ -23,15 +23,29 @@ def lu_decomposition_sparse(A, n):
     """Perform LU decomposition on a sparse matrix A represented as a list of tuples."""
     L, U = initialize_lu_sparse(n)
 
-    for (i, j, value) in A:
-        # Assuming A is upper triangular for this simplified example
-        add_to_sparse(U, i, j, value)  # Directly add A's values to U for upper triangular part
+    for k in range(n):
+        # Update U: Directly add A's values for the upper triangular part
+        for (i, j, value) in A:
+            if i <= k and j == k:  # Assuming A is not necessarily upper triangular
+                add_to_sparse(U, i, j, value)
 
-        # For the lower triangular part, calculation would be more involved and
-        # depends on maintaining sparsity and managing fill-in.
-
-    # This example does not fully implement the sparse LU decomposition logic,
-    # but provides a starting point for handling sparse matrices.
+        # Compute multipliers and update L and U for the lower triangular part
+        for i in range(k+1, n):
+            # Compute the multiplier for the current row i, column k
+            a_ik = get_from_sparse(A, i, k)
+            u_kk = get_from_sparse(U, k, k)
+            if u_kk != 0:  # Avoid division by zero
+                l_ik = a_ik / u_kk
+                add_to_sparse(L, i, k, l_ik)
+                
+                # Update U based on the multiplier
+                for j in range(k+1, n):
+                    a_ij = get_from_sparse(A, i, j)
+                    u_kj = get_from_sparse(U, k, j)
+                    # Subtract the contribution of the current row of L from row i of A before adding to U
+                    adjusted_value = a_ij - l_ik * u_kj
+                    if adjusted_value != 0:
+                        add_to_sparse(U, i, j, adjusted_value)
 
     return L, U
 
@@ -65,9 +79,9 @@ def sparse_backward_substitution(U, y):
     return x
 
 # Example usage
-n = 4  # Assuming a 4x4 matrix
-A_sparse = [(0, 1, 2.0), (2, 3, 4.0)]  # Example sparse matrix representation
-b = [1, 2, 3, 4]
+n = 5  # Assuming a 4x4 matrix
+A_sparse = [(0, 1, 2.0), (2, 3, 4.0), (3, 4, 5.0), (1, 0, 3.0), (2, 1, 2.0), (3, 2, 4.0)]  # Example sparse matrix representation
+b = [1, 2, 3, 4, 5]
 L, U = lu_decomposition_sparse(A_sparse, n)
 print("L:", L)
 print("U:", U)
