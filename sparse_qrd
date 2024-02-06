@@ -1,0 +1,43 @@
+def sparse_qr_decomposition(A_sparse, m, n):
+    # A_sparse is the input sparse matrix in the form of a list of tuples (row, col, value)
+    # Convert A_sparse to DOK format for easier manipulation
+    A_dok = {(row, col): value for row, col, value in A_sparse}
+    
+    # Initialize Q and R in DOK format
+    Q_dok = {}
+    R_dok = {}
+    
+    for j in range(n):
+        # Initialize q as the j-th column of A
+        q = {(i, 0): A_dok.get((i, j), 0) for i in range(m)}
+        
+        for i in range(j):
+            # Compute R[i][j]
+            R_dok[(i, j)] = sum(Q_dok.get((k, i), 0) * A_dok.get((k, j), 0) for k in range(m))
+            
+            # Subtract the projection of A[j] onto Q[i] from q
+            for k in range(m):
+                q_val = q.get((k, 0), 0)
+                q[(k, 0)] = q_val - R_dok[(i, j)] * Q_dok.get((k, i), 0)
+        
+        # Normalize q to get the j-th column of Q
+        norm = sum(val ** 2 for val in q.values()) ** 0.5
+        for k, val in q.items():
+            if norm > 0:
+                Q_dok[(k[0], j)] = val / norm
+        
+        R_dok[(j, j)] = norm
+    
+    # Convert Q_dok and R_dok back to the list of tuples format
+    Q_sparse = [(row, col, value) for (row, col), value in Q_dok.items() if value != 0]
+    R_sparse = [(row, col, value) for (row, col), value in R_dok.items() if value != 0]
+    
+    return Q_sparse, R_sparse
+
+# Example usage with a simple sparse matrix
+A_sparse = [(0, 0, 1), (1, 1, 2), (2, 2, 3)]  # Diagonal matrix for simplicity
+m, n = 3, 3  # Assuming a square matrix for this example
+Q_sparse, R_sparse = sparse_qr_decomposition(A_sparse, m, n)
+
+print("Sparse Q:", Q_sparse)
+print("Sparse R:", R_sparse)

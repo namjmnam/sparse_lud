@@ -35,9 +35,43 @@ def lu_decomposition_sparse(A, n):
 
     return L, U
 
+def sparse_forward_substitution(L, b):
+    n = len(b)  # Assuming b is a dense vector for simplicity
+    y = [0] * n
+    for i in range(n):
+        # For each row i, find the elements in L
+        sum_y = 0
+        for (row, col, value) in L:
+            if row == i:
+                if col < i:
+                    sum_y += value * y[col]
+                elif col == i:
+                    y[i] = (b[i] - sum_y) / value
+                    break
+    return y
+
+def sparse_backward_substitution(U, y):
+    n = len(y)
+    x = [0] * n
+    for i in reversed(range(n)):
+        sum_x = 0
+        for (row, col, value) in reversed(U):
+            if row == i:
+                if col > i:
+                    sum_x += value * x[col]
+                elif col == i:
+                    x[i] = (y[i] - sum_x) / value
+                    break
+    return x
+
 # Example usage
 n = 4  # Assuming a 4x4 matrix
 A_sparse = [(0, 1, 2.0), (2, 3, 4.0)]  # Example sparse matrix representation
+b = [1, 2, 3, 4]
 L, U = lu_decomposition_sparse(A_sparse, n)
 print("L:", L)
 print("U:", U)
+
+y = sparse_forward_substitution(L, b)
+x = sparse_backward_substitution(U, y)
+print("x:", x)
